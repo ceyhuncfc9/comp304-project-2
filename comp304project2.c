@@ -22,14 +22,19 @@ pthread_cond_t queue[1024];
 pthread_cond_t speak[1024];
 
 int pthread_sleep(double seconds);
-
-char *currentTime() //ADD UP TO MILISECONDS
+char currentTime[12];
+struct timeval initial_time;
+char* getCurrentTime() //ADD UP TO MILISECONDS
 {
-    char *time;
     struct timeval tp;
     gettimeofday(&tp, NULL);
-    sprintf(time, "%d", tp.tv_sec);
-    return time;
+    int m = (tp.tv_sec-initial_time.tv_sec) / 60;
+    int s = tp.tv_sec -initial_time.tv_sec- m * 60;
+    int ms = tp.tv_usec / 1000; 
+    if (ms < 0) 
+        ms += 1000;
+    sprintf(currentTime, "[%02d:%02d.%03d]", m, s, ms);
+    return currentTime;
 }
 void *commentator(void *args)
 {
@@ -59,7 +64,7 @@ void *commentator(void *args)
         {
             speaker_count++;
             answer_list[commentator_count] = id;
-            printf(" Commentator #%d generates answer, position in queue: %d\n", id, speaker_count);
+            printf("%s Commentator #%d generates answer, position in queue: %d\n", getCurrentTime(), id, speaker_count);
         }
 
         commentator_count++;
@@ -75,9 +80,9 @@ void *commentator(void *args)
 	    pthread_cond_wait(&queue[id], &mutex);
 
             double speak_time = (double)random() / (double)(RAND_MAX / t);
-            printf(" Commentator #%d's turn to speak for %f seconds\n", id, speak_time);
+            printf("%s Commentator #%d's turn to speak for %f seconds\n", getCurrentTime(), id, speak_time);
             pthread_sleep(speak_time);
-            printf(" Commentator #%d finished speaking\n", id);
+            printf("%s Commentator #%d finished speaking\n", getCurrentTime(), id);
 
 	    // Signal that this commentator is done speaking
 	    pthread_cond_signal(&speak[id]);
@@ -95,7 +100,7 @@ void *moderator(void *args)
 
         commentator_count = 0;
         speaker_count = 0;
-	printf(": Moderator asks question %d\n", i);	
+	printf("%s Moderator asks question %d\n",getCurrentTime(),i);	
 	// Signal all commentators to calculate probabilty and get in queue
 	pthread_cond_broadcast(&question_asked);
 
@@ -122,6 +127,8 @@ int main()
     q = 5;    // number of questions
     n = 4;    // number of commentators
     t = 3;    // max time for a commentator to speak
+
+    gettimeofday(&initial_time, NULL);
 
     printf("\n===============================\n");
     printf("Starting task\n");
