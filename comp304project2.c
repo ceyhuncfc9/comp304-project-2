@@ -16,7 +16,8 @@ int answer_list[1024] = {0}; //we assume that n<1024
 
 // Thread handling conditions
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t commentator_process = PTHREAD_COND_INITIALIZER;
+pthread_cond_t commentators_done = PTHREAD_COND_INITIALIZER;
+sem_t commentator_process;
 pthread_cond_t question_asked = PTHREAD_COND_INITIALIZER;
 pthread_cond_t queue[1024];
 pthread_cond_t speak[1024];
@@ -24,30 +25,30 @@ pthread_cond_t speak[1024];
 int pthread_sleep(double seconds);
 char currentTime[12];
 struct timeval initial_time;
-char* getCurrentTime() //ADD UP TO MILISECONDS
+char *getCurrentTime() //ADD UP TO MILISECONDS
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
-    int m = (tp.tv_sec-initial_time.tv_sec) / 60;
-    int s = tp.tv_sec -initial_time.tv_sec- m * 60;
-    int ms = tp.tv_usec / 1000; 
-    if (ms < 0) 
+    int m = (tp.tv_sec - initial_time.tv_sec) / 60;
+    int s = tp.tv_sec - initial_time.tv_sec - m * 60;
+    int ms = tp.tv_usec / 1000;
+    if (ms < 0)
         ms += 1000;
     sprintf(currentTime, "[%02d:%02d.%03d]", m, s, ms);
     return currentTime;
 }
 void *commentator(void *args)
 {
-    const int id = (long) args;
+    const int id = (long)args;
     for (int i = 0; i < q; i++)
     {
         // Wait for question asked broadcast
-	pthread_mutex_lock(&mutex);
-	pthread_cond_wait(&question_asked, &mutex);
-	
-	// Generate answer with probability p
-	double prob = (double)random() / RAND_MAX;
-	int answer = 0;
+        pthread_mutex_lock(&mutex);
+        pthread_cond_wait(&question_asked, &mutex);
+
+        // Generate answer with probability p
+        double prob = (double)random() / RAND_MAX;
+        int answer = 0;
         if (prob < p)
         {
             answer = 1;
@@ -57,7 +58,8 @@ void *commentator(void *args)
             answer = 0;
         }
 
-	// Lock for commentator process
+        // Lock for commentator process
+        sem_wait(&commentator_process);
         if (!answer)
             answer_list[commentator_count] = 0;
         else
@@ -70,25 +72,25 @@ void *commentator(void *args)
         commentator_count++;
         if (commentator_count == n)
         {
-            	// Signal that all commentators are finished
-		pthread_cond_signal(&commentator_process);
+            // Signal that all commentators are finished
+            pthread_cond_signal(&commentators_done);
         }
-
+        sem_post(&commentator_process);
         if (answer == 1)
         {
-	    // Make the commentator wait untill the turn comes
-	    pthread_cond_wait(&queue[id], &mutex);
+            // Make the commentator wait untill the turn comes
+            pthread_cond_wait(&queue[id], &mutex);
 
             double speak_time = (double)random() / (double)(RAND_MAX / t);
             printf("%s Commentator #%d's turn to speak for %f seconds\n", getCurrentTime(), id, speak_time);
             pthread_sleep(speak_time);
             printf("%s Commentator #%d finished speaking\n", getCurrentTime(), id);
 
-	    // Signal that this commentator is done speaking
-	    pthread_cond_signal(&speak[id]);
-       	}
+            // Signal that this commentator is done speaking
+            pthread_cond_signal(&speak[id]);
+        }
 
-	pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutex);
     }
 }
 
@@ -96,28 +98,28 @@ void *moderator(void *args)
 {
     for (int i = 1; i < q + 1; i++)
     {
-	pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&mutex);
 
         commentator_count = 0;
         speaker_count = 0;
-	printf("%s Moderator asks question %d\n",getCurrentTime(),i);	
-	// Signal all commentators to calculate probabilty and get in queue
-	pthread_cond_broadcast(&question_asked);
+        printf("%s Moderator asks question %d\n", getCurrentTime(), i);
+        // Signal all commentators to calculate probabilty and get in queue
+        pthread_cond_broadcast(&question_asked);
 
-	// Wait untill all commentator processes are finished
-	pthread_cond_wait(&commentator_process, &mutex);
+        // Wait untill all commentator processes are finished
+        pthread_cond_wait(&commentators_done, &mutex);
 
         for (int j = 0; j < n; j++)
         {
             if (answer_list[j] != 0) //note that 0 is not a valid id for any commentator
             {
-		    // Give commentator with id answer_list[j] turn to speak
-		    pthread_cond_signal(&queue[answer_list[j]]);
-		    // Wait untill commentator is finished speaking
-		    pthread_cond_wait(&speak[answer_list[j]], &mutex);
+                // Give commentator with id answer_list[j] turn to speak
+                pthread_cond_signal(&queue[answer_list[j]]);
+                // Wait untill commentator is finished speaking
+                pthread_cond_wait(&speak[answer_list[j]], &mutex);
             }
         }
-	pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutex);
     }
 }
 
@@ -125,26 +127,27 @@ int main()
 {
     p = 0.75; // probability of a commentator speaks
     q = 5;    // number of questions
-    n = 4;    // number of commentators
-    t = 3;    // max time for a commentator to speak
+    n = 20;   // number of commentators
+    t = 0.1;  // max time for a commentator to speak
 
     gettimeofday(&initial_time, NULL);
 
     printf("\n===============================\n");
     printf("Starting task\n");
     // Initiliaze waiting conditions
-    for (int i=0; i<1024; i++) 
+    for (int i = 0; i < 1024; i++)
     {
-    	pthread_cond_init(&queue[i], NULL);
-	pthread_cond_init(&speak[i], NULL);
+        pthread_cond_init(&queue[i], NULL);
+        pthread_cond_init(&speak[i], NULL);
     }
 
+    sem_init(&commentator_process, 0, 1);
     printf("After every cond init in main\n");
 
     pthread_create(&tid[0], NULL, moderator, NULL);
     for (int i = 1; i < n + 1; i++)
     {
-        pthread_create(&tid[i], NULL, commentator, (void*)(long) i);
+        pthread_create(&tid[i], NULL, commentator, (void *)(long)i);
     }
     printf("After every thread create\n");
 
