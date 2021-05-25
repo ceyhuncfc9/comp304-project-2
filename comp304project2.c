@@ -218,7 +218,7 @@ int main()
     }
 
     sem_init(&commentator_process, 0, 1);
-    sem_init(&breaking_event, 0, 1);
+    sem_init(&breaking_event, 0, 0);
     printf("After every cond init in main\n");
 
     pthread_create(&tid[0], NULL, moderator, NULL);
@@ -241,6 +241,7 @@ int main()
         double prob = (double)random() / RAND_MAX;
         if (prob < b) //a breaking event occurs
         {
+            printf("breaking event in main\n");
             sem_post(&breaking_event);
             pthread_mutex_lock(&breaking_event_ends_mutex);
             pthread_cond_wait(&breaking_event_ends, &breaking_event_ends_mutex);
