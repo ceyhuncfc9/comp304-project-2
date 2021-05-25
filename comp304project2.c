@@ -33,6 +33,7 @@ pthread_cond_t queue[1024];
 pthread_cond_t speak[1024];
 pthread_cond_t conditionvar;
 
+int pthread_sleep(double seconds);
 int pthread_sleep_updated(double seconds);
 char currentTime[12];
 struct timeval initial_time;
@@ -173,9 +174,8 @@ void *breaking_event_observer(void *args)
         if (current_speaker != -1)
             printf("%s Commentator #%d is cut short due to breaking event\n", getCurrentTime(), current_speaker);
         pthread_mutex_unlock(&current_speaker_mutex);
-        //pthread_sleep_updated(0.5); //CHANGE BACK TO 5
+        pthread_sleep(0.5); //CHANGE BACK TO 5
         printf("%s Breaking news ends\n", getCurrentTime());
-
 
         //   pthread_mutex_lock(&breaking_event_ends_mutex);
         pthread_cond_broadcast(&breaking_event_ends);
@@ -191,8 +191,8 @@ int main()
 {
     p = 0.75; // probability of a commentator speaks
     q = 5;    // number of questions
-    n = 5;    // number of commentators
-    t = 0.5;  // max time for a commentator to speak
+    n = 20;    // number of commentators
+    t = 0.2;  // max time for a commentator to speak
     b = 0.5;  //probability of a breaking event happens
 
     gettimeofday(&initial_time, NULL);
@@ -220,10 +220,10 @@ int main()
 
     while (1)
     {
-          printf("CP1:simulation done is %d\n",simulation_done);
+        printf("CP1:simulation done is %d\n", simulation_done);
 
         pthread_mutex_lock(&simulation_done_mutex);
-         printf("CP2:simulation done is %d\n",simulation_done);
+        printf("CP2:simulation done is %d\n", simulation_done);
         if (simulation_done)
             break;
         pthread_mutex_unlock(&simulation_done_mutex);
@@ -231,11 +231,11 @@ int main()
         if (prob < b) //a breaking event occurs
         {
             sem_post(&breaking_event);
-                pthread_mutex_lock(&breaking_event_ends_mutex);
+            pthread_mutex_lock(&breaking_event_ends_mutex);
             pthread_cond_wait(&breaking_event_ends, &breaking_event_ends_mutex);
-               pthread_mutex_unlock(&breaking_event_ends_mutex);
+            pthread_mutex_unlock(&breaking_event_ends_mutex);
         }
-        //pthread_sleep_updated(1);
+        pthread_sleep(1);
     }
     printf("Main pthread join\n");
 
@@ -254,6 +254,43 @@ int main()
 int pthread_sleep_updated(double seconds)
 {
     pthread_mutex_t mutex;
+    if (pthread_mutex_init(&mutex, NULL))
+    {
+        return -1;
+    }
+    if (pthread_cond_init(&conditionvar, NULL))
+    {
+        return -1;
+    }
+
+    struct timeval tp;
+    struct timespec timetoexpire;
+    // When to expire is an absolute time, so get the current time and add
+    // it to our delay time
+    gettimeofday(&tp, NULL);
+    long new_nsec = tp.tv_usec * 1000 + (seconds - (long)seconds) * 1e9;
+    timetoexpire.tv_sec = tp.tv_sec + (long)seconds + (new_nsec / (long)1e9);
+    timetoexpire.tv_nsec = new_nsec % (long)1e9;
+
+    pthread_mutex_lock(&mutex);
+    int res = pthread_cond_timedwait(&conditionvar, &mutex, &timetoexpire);
+    pthread_mutex_unlock(&mutex);
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&conditionvar);
+
+    //Upon successful completion, a value of zero shall be returned
+    return res;
+}
+/**
+ * pthread_sleep takes an integer number of seconds to pause the current thread
+ * original by Yingwu Zhu
+ * updated by Muhammed Nufail Farooqi
+ * updated by Fahrican Kosar
+ */
+int pthread_sleep(double seconds)
+{
+    pthread_mutex_t mutex;
+    pthread_cond_t conditionvar;
     if (pthread_mutex_init(&mutex, NULL))
     {
         return -1;
