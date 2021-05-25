@@ -17,6 +17,7 @@ int answer_list[1024] = {0}; //we assume that n<1024
 int simulation_done = 0;
 int current_speaker = -1;
 int breaking_event_happening;
+int interrupted[1024] = {0};
 
 // Thread handling conditions
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -24,6 +25,7 @@ pthread_mutex_t simulation_done_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t current_speaker_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t breaking_event_happening_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t breaking_event_ends_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t interrupted_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t commentators_done = PTHREAD_COND_INITIALIZER;
 pthread_cond_t breaking_event_ends = PTHREAD_COND_INITIALIZER;
 sem_t commentator_process;
@@ -96,7 +98,11 @@ void *commentator(void *args)
             double speak_time = (double)random() / (double)(RAND_MAX / t);
             printf("%s Commentator #%d's turn to speak for %f seconds\n", getCurrentTime(), id, speak_time);
             pthread_sleep_updated(speak_time);
-            printf("%s Commentator #%d finished speaking\n", getCurrentTime(), id);
+                        pthread_mutex_lock(&interrupted_mutex);
+            if (interrupted[id] == 0)
+                        printf("%s Commentator #%d finished speaking\n", getCurrentTime(), id);
+
+            pthread_mutex_unlock(&interrupted_mutex);
 
             // Signal that this commentator is done speaking
             pthread_cond_signal(&speak[id]);
@@ -172,7 +178,12 @@ void *breaking_event_observer(void *args)
         pthread_cond_signal(&conditionvar);
         pthread_mutex_lock(&current_speaker_mutex);
         if (current_speaker != -1)
+        {
+            pthread_mutex_lock(&interrupted_mutex);
+            interrupted[current_speaker] = 1;
+            pthread_mutex_unlock(&interrupted_mutex);
             printf("%s Commentator #%d is cut short due to breaking event\n", getCurrentTime(), current_speaker);
+        }
         pthread_mutex_unlock(&current_speaker_mutex);
         pthread_sleep(0.5); //CHANGE BACK TO 5
         printf("%s Breaking news ends\n", getCurrentTime());
@@ -191,8 +202,8 @@ int main()
 {
     p = 0.75; // probability of a commentator speaks
     q = 5;    // number of questions
-    n = 20;    // number of commentators
-    t = 0.2;  // max time for a commentator to speak
+    n = 4;   // number of commentators
+    t = 3;  // max time for a commentator to speak
     b = 0.5;  //probability of a breaking event happens
 
     gettimeofday(&initial_time, NULL);
