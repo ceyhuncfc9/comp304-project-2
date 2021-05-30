@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <semaphore.h>
+#include <sys/time.h>
 
 pthread_t tid[1024] = {0}; // Max number of threads, note: we assume that n<1024
 
@@ -45,9 +46,12 @@ char *getCurrentTime() //ADD UP TO MILISECONDS
     gettimeofday(&tp, NULL);
     int m = (tp.tv_sec - initial_time.tv_sec) / 60;
     int s = tp.tv_sec - initial_time.tv_sec - m * 60;
-    int ms = tp.tv_usec / 1000;
+    int ms = (tp.tv_usec - initial_time.tv_usec) / 1000;
     if (ms < 0)
+    {
         ms += 1000;
+        s--;
+    }
     sprintf(currentTime, "[%02d:%02d.%03d]", m, s, ms);
     return currentTime;
 }
@@ -98,9 +102,9 @@ void *commentator(void *args)
             double speak_time = (double)random() / (double)(RAND_MAX / t);
             printf("%s Commentator #%d's turn to speak for %f seconds\n", getCurrentTime(), id, speak_time);
             pthread_sleep_updated(speak_time);
-                        pthread_mutex_lock(&interrupted_mutex);
+            pthread_mutex_lock(&interrupted_mutex);
             if (interrupted[id] == 0)
-                        printf("%s Commentator #%d finished speaking\n", getCurrentTime(), id);
+                printf("%s Commentator #%d finished speaking\n", getCurrentTime(), id);
 
             pthread_mutex_unlock(&interrupted_mutex);
 
@@ -202,8 +206,8 @@ int main()
 {
     p = 0.75; // probability of a commentator speaks
     q = 5;    // number of questions
-    n = 4;   // number of commentators
-    t = 3;  // max time for a commentator to speak
+    n = 4;    // number of commentators
+    t = 3;    // max time for a commentator to speak
     b = 0.5;  //probability of a breaking event happens
 
     gettimeofday(&initial_time, NULL);
