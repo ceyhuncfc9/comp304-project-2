@@ -1,0 +1,57 @@
+burcu@burcu-VirtualBox:~/Desktop/comp304project2$ ./test -n 4 -p 0.75 -q 5 -t 3 -b 0.05
+[00:00.000] Moderator asks question 1
+[00:00.000] Commentator #4 generates answer, position in queue: 1
+[00:00.000] Commentator #3 generates answer, position in queue: 2
+[00:00.000] Commentator #2 generates answer, position in queue: 3
+[00:00.000] Commentator #1 generates answer, position in queue: 4
+[00:00.000] Commentator #4's turn to speak for 1.074031 seconds
+[00:01.075] Commentator #4 finished speaking
+[00:01.075] Commentator #3's turn to speak for 1.602134 seconds
+[00:02.679] Commentator #3 finished speaking
+[00:02.679] Commentator #2's turn to speak for 1.645246 seconds
+[00:04.324] Commentator #2 finished speaking
+[00:04.324] Commentator #1's turn to speak for 0.799199 seconds
+[00:05.123] Commentator #1 finished speaking
+[00:05.123] Moderator asks question 2
+[00:05.123] Commentator #3 generates answer, position in queue: 1
+[00:05.123] Commentator #1 generates answer, position in queue: 2
+[00:05.123] Commentator #3's turn to speak for 1.387778 seconds
+[00:06.512] Commentator #3 finished speaking
+[00:06.512] Commentator #1's turn to speak for 2.885907 seconds
+[00:09.398] Commentator #1 finished speaking
+[00:09.398] Moderator asks question 3
+[00:09.398] Commentator #4 generates answer, position in queue: 1
+[00:09.398] Commentator #2 generates answer, position in queue: 2
+[00:09.398] Commentator #3 generates answer, position in queue: 3
+[00:09.398] Commentator #1 generates answer, position in queue: 4
+[00:09.398] Commentator #4's turn to speak for 1.210638 seconds
+[00:10.008] Breaking news!
+[00:10.008] Commentator #4 is cut short due to breaking event
+[00:15.009] Breaking news ends
+[00:15.009] Commentator #2's turn to speak for 2.881093 seconds
+[00:16.010] Breaking news!
+[00:16.010] Commentator #2 is cut short due to breaking event
+[00:21.011] Breaking news ends
+[00:21.011] Commentator #3's turn to speak for 1.773457 seconds
+[00:22.787] Commentator #3 finished speaking
+[00:22.787] Commentator #1's turn to speak for 1.914381 seconds
+[00:24.702] Commentator #1 finished speaking
+[00:24.702] Moderator asks question 4
+[00:24.702] Commentator #4 generates answer, position in queue: 1
+[00:24.702] Commentator #2 generates answer, position in queue: 2
+[00:24.702] Commentator #1 generates answer, position in queue: 3
+[00:24.702] Commentator #4's turn to speak for 2.937802 seconds
+[00:27.640] Commentator #2's turn to speak for 2.072844 seconds
+[00:29.714] Commentator #1's turn to speak for 0.697338 seconds
+[00:30.411] Commentator #1 finished speaking
+[00:30.411] Moderator asks question 5
+[00:30.411] Commentator #4 generates answer, position in queue: 1
+[00:30.411] Commentator #2 generates answer, position in queue: 2
+[00:30.411] Commentator #3 generates answer, position in queue: 3
+[00:30.411] Commentator #1 generates answer, position in queue: 4
+[00:30.411] Commentator #4's turn to speak for 0.022932 seconds
+[00:30.434] Commentator #2's turn to speak for 0.546309 seconds
+[00:30.982] Commentator #3's turn to speak for 0.554548 seconds
+[00:31.537] Commentator #3 finished speaking
+[00:31.537] Commentator #1's turn to speak for 2.664533 seconds
+[00:34.202] Commentator #1 finished speaking
