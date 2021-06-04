@@ -1,0 +1,21 @@
+All parts work properly.
+For Part 1:
+Moderator broadcast a condition variable when it asked the question,
+then it waits for another condition variable which will be signalled
+by the last commentator. Each commentator who decides to answer or not
+write its decision into an array (0 if it decides not to answer,
+its id if it will answer). There is also a count of commentators who
+reported his decision. Last commentator understands he is the last 
+commentator by this count and signals for the moderator to continue.
+Since we keep the count of commentators who make a decision instead of
+the ones who will answer, we easily handle the 0 answer case.
+
+For part 2:
+There is a loop in main which randomly decides whether there is a 
+breaking event each second. If there is a breaking event it posts a 
+semaphore. Observer waits for this semaphore. When observer observes,
+it updetes a variable indicating there is a breaking event. Moderator
+looks at that variable before letting commentators to speak. When
+there is a breaking event main and moderator waits for a signal from
+observer to continue. Observer stops the speaking commentator by signalling
+a condition variable. 

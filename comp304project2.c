@@ -4,6 +4,7 @@
 #include <time.h>
 #include <semaphore.h>
 #include <sys/time.h>
+#include <string.h>
 
 pthread_t tid[1024] = {0}; // Max number of threads, note: we assume that n<1024
 
@@ -189,28 +190,57 @@ void *breaking_event_observer(void *args)
             printf("%s Commentator #%d is cut short due to breaking event\n", getCurrentTime(), current_speaker);
         }
         pthread_mutex_unlock(&current_speaker_mutex);
-        pthread_sleep(0.5); //CHANGE BACK TO 5
+        pthread_sleep(5); //CHANGE BACK TO 5
         printf("%s Breaking news ends\n", getCurrentTime());
 
         //   pthread_mutex_lock(&breaking_event_ends_mutex);
         pthread_cond_broadcast(&breaking_event_ends);
-        printf("observer broadcast\n");
         // pthread_mutex_lock(&breaking_event_happening_mutex);
-        printf("observer changed breaking_event_happening\n");
         breaking_event_happening = 0;
         pthread_mutex_unlock(&breaking_event_happening_mutex);
         //  pthread_mutex_unlock(&breaking_event_ends_mutex);
     }
 }
-int main()
+int main(int argc, char *argv[])
 {
-    p = 0.75; // probability of a commentator speaks
-    q = 5;    // number of questions
-    n = 4;    // number of commentators
-    t = 3;    // max time for a commentator to speak
-    b = 0.5;  //probability of a breaking event happens
-
-    gettimeofday(&initial_time, NULL);
+    if (argc != 11)
+    {
+        printf("Wrong number of parameters!\n");
+        return;
+    }
+    for (int i = 0; i < 5; i++)
+    {
+        if (strcmp(argv[2 * i + 1], "-p") == 0)
+        {
+            p = atof(argv[2 * i + 2]);
+        }
+        if (strcmp(argv[2 * i + 1], "-q") == 0)
+        {
+            q = atof(argv[2 * i + 2]);
+        }
+        if (strcmp(argv[2 * i + 1], "-b") == 0)
+        {
+            b = atof(argv[2 * i + 2]);
+        }
+        if (strcmp(argv[2 * i + 1], "-n") == 0)
+        {
+            n = atoi(argv[2 * i+2]);
+        }
+        if (strcmp(argv[2 * i + 1], "-t") == 0)
+        {
+            t = atof(argv[2 * i + 2]);
+        }
+    }
+    //DELETE FOLLOWING WHEN WE ARE DONE
+// printf("n: %d p: %f q : %d t: %f b: %f\n ", n, p, q, t, b);
+ /*   //return;
+ p = 0.75; // probability of a commentator speaks
+ q = 5;    // number of questions
+ n = 4;    // number of commentators
+ t = 3; // max time for a commentator to speak
+ b = 0.05; //probability of a breaking event happens
+     printf("n: %d p: %f q : %d t: %f b: %f\n ", n, p, q, t, b);
+  */  gettimeofday(&initial_time, NULL);
 
     printf("\n===============================\n");
     printf("Starting task\n");
@@ -223,7 +253,6 @@ int main()
 
     sem_init(&commentator_process, 0, 1);
     sem_init(&breaking_event, 0, 0);
-    printf("After every cond init in main\n");
 
     pthread_create(&tid[0], NULL, moderator, NULL);
     for (int i = 1; i < n + 1; i++)
@@ -231,21 +260,16 @@ int main()
         pthread_create(&tid[i], NULL, commentator, (void *)(long)i);
     }
     pthread_create(&tid[n + 1], NULL, breaking_event_observer, NULL);
-    printf("After every thread create\n");
 
     while (1)
     {
-        printf("CP1:simulation done is %d\n", simulation_done);
-
         pthread_mutex_lock(&simulation_done_mutex);
-        printf("CP2:simulation done is %d\n", simulation_done);
         if (simulation_done)
             break;
         pthread_mutex_unlock(&simulation_done_mutex);
         double prob = (double)random() / RAND_MAX;
         if (prob < b) //a breaking event occurs
         {
-            printf("breaking event in main\n");
             sem_post(&breaking_event);
             pthread_mutex_lock(&breaking_event_ends_mutex);
             pthread_cond_wait(&breaking_event_ends, &breaking_event_ends_mutex);
@@ -253,7 +277,6 @@ int main()
         }
         pthread_sleep(1);
     }
-    printf("Main pthread join\n");
 
     pthread_cancel(tid[n + 1]);
     for (int i = 0; i <= n + 1; ++i)
