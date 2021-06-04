@@ -166,7 +166,6 @@ void *moderator(void *args)
     }
     pthread_mutex_lock(&simulation_done_mutex);
     simulation_done = 1;
-    //   printf("Now simulation_done is 1\n");
     pthread_mutex_unlock(&simulation_done_mutex);
 }
 
@@ -177,7 +176,6 @@ void *breaking_event_observer(void *args)
         sem_wait(&breaking_event);
         pthread_mutex_lock(&breaking_event_happening_mutex);
         breaking_event_happening = 1;
-        // pthread_mutex_unlock(&breaking_event_happening_mutex);
 
         printf("%s Breaking news!\n", getCurrentTime());
         pthread_cond_signal(&conditionvar);
@@ -190,15 +188,12 @@ void *breaking_event_observer(void *args)
             printf("%s Commentator #%d is cut short due to breaking event\n", getCurrentTime(), current_speaker);
         }
         pthread_mutex_unlock(&current_speaker_mutex);
-        pthread_sleep(5); //CHANGE BACK TO 5
+        pthread_sleep(5); 
         printf("%s Breaking news ends\n", getCurrentTime());
 
-        //   pthread_mutex_lock(&breaking_event_ends_mutex);
         pthread_cond_broadcast(&breaking_event_ends);
-        // pthread_mutex_lock(&breaking_event_happening_mutex);
         breaking_event_happening = 0;
         pthread_mutex_unlock(&breaking_event_happening_mutex);
-        //  pthread_mutex_unlock(&breaking_event_ends_mutex);
     }
 }
 int main(int argc, char *argv[])
@@ -231,16 +226,6 @@ int main(int argc, char *argv[])
             t = atof(argv[2 * i + 2]);
         }
     }
-    //DELETE FOLLOWING WHEN WE ARE DONE
-// printf("n: %d p: %f q : %d t: %f b: %f\n ", n, p, q, t, b);
- /*   //return;
- p = 0.75; // probability of a commentator speaks
- q = 5;    // number of questions
- n = 4;    // number of commentators
- t = 3; // max time for a commentator to speak
- b = 0.05; //probability of a breaking event happens
-     printf("n: %d p: %f q : %d t: %f b: %f\n ", n, p, q, t, b);
-  */  
     srand(time(NULL));
     gettimeofday(&initial_time, NULL);
 
