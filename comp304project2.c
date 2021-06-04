@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
     if (argc != 11)
     {
         printf("Wrong number of parameters!\n");
-        return;
+        return 0;
     }
     for (int i = 0; i < 5; i++)
     {
@@ -240,10 +240,10 @@ int main(int argc, char *argv[])
  t = 3; // max time for a commentator to speak
  b = 0.05; //probability of a breaking event happens
      printf("n: %d p: %f q : %d t: %f b: %f\n ", n, p, q, t, b);
-  */  gettimeofday(&initial_time, NULL);
+  */  
+    srand(time(NULL));
+    gettimeofday(&initial_time, NULL);
 
-    printf("\n===============================\n");
-    printf("Starting task\n");
     // Initiliaze waiting conditions
     for (int i = 0; i < 1024; i++)
     {
@@ -281,6 +281,8 @@ int main(int argc, char *argv[])
     pthread_cancel(tid[n + 1]);
     for (int i = 0; i <= n + 1; ++i)
         pthread_join(tid[i], NULL);
+
+    return 0;
 }
 
 /**
